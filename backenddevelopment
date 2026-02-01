@@ -42,7 +42,7 @@ const EMERGENCY_SAFETY_GATE = [
   /\bhissing\b/i,
   
   // Water emergencies (broad) - includes typos
-  /\b(?:flood|flooding|flooded|floading|floding|flloding)\b/i,
+  /\b(?:flood|flooding|flooded|floading|floding|flloding|fludding|fludding)\b/i,
   /\binches\s+of\s+water\b/i,
   /\b(?:water\s+)?level\s+rising\b/i,
   /\bwater\s+(?:suddenly|just)\s+stopped\b/i,
@@ -61,6 +61,17 @@ const EMERGENCY_SAFETY_GATE = [
   /\b(?:baby|infant|newborn|elderly)\b.*\bno\s+water\b/i,
   /\bwell\s+(?:pump\s+)?(?:failed|stopped|quit)\b/i,
   /\b\d+\s*(?:am|pm)\s+(?:and\s+)?(?:we\s+have\s+)?no\s+water\b/i,
+  // Broad no-water patterns (urgent habitability issue)
+  /\b(?:no|lost|lost\s+all|completely\s+out\s+of|out\s+of)\s+(?:running\s+)?water\b/i,
+  /\b(?:water\s+stopped|no\s+running\s+water|nothing\s+comes?\s+out)\b/i,
+  // Frozen pipe emergencies
+  /\b(?:pipe|pipes)\s*(?:froze|frozen|freezing|frosted)\b/i,
+  /\b(?:froze|frozen|freezing)\s*(?:pipe|pipes|line|lines)\b/i,
+  /\b(?:ice\s+in\s+(?:the\s+)?pipe|cold\s+snap\s+damage)\b/i,
+  // Can't shutoff emergencies (active water + no control)
+  /\b(?:valve|shutoff|shut\s*off)\s*(?:stuck|won'?t|wont|can'?t|cant|broken|seized)\b/i,
+  /\b(?:can'?t|cant|won'?t|wont)\s+(?:find|turn|shut)\s+(?:the\s+)?(?:shut\s*off|valve|water\s+off|main)\b/i,
+  /\b(?:main|water)\s+(?:won'?t|wont|can'?t|cant)\s+(?:turn|shut)\b/i,
   
   // Sump pump emergencies
   /\b(?:sump|ejector)\s*(?:pump)?\s*(?:alarm|not\s+keeping\s+up|overwhelmed|failed)\b/i,
@@ -12605,6 +12616,9 @@ CLASSIFICATION OPTIONS:
 - ELECTRICAL_WATER: Water near electrical outlets/panels, sparks with water. NOT our job - route to electrician, but we can help after.
 - SEWER_GAS: Rotten egg smell FROM DRAIN (not near gas appliances), dry p-trap. OUR job but NOT an emergency - can book normally.
 - HOT_WATER_SULFUR: Rotten egg smell only when running hot water. OUR job but NOT emergency - anode rod issue.
+- FROZEN_PIPES: Pipes frozen, no water due to freezing, ice in pipes, cold snap damage. OUR job - urgent, risk of pipe burst.
+- NO_WATER: Complete loss of water, no running water, water stopped suddenly. OUR job - urgent habitability issue.
+- CANT_SHUTOFF: Can't find or turn shutoff valve, valve stuck, water won't stop and no control. OUR job - urgent, active water damage.
 - NOT_EMERGENCY: Slow drain, minor leak, routine issue that triggered keywords. Not an emergency - proceed normally.
 - NEEDS_CLARIFICATION: Ambiguous situation, need exactly ONE question to determine routing.
 
@@ -12621,9 +12635,12 @@ RESPONSE RULES:
 4. For flooding: Give shutoff tip. Do NOT ask for address.
 5. For not-our-job: Close with "Give us a call if you need plumbing assistance after this is resolved."
 6. For false alarms: Reassure them briefly.
-7. ONE clarifying question maximum if CLARIFY routing.
-8. Keep responses concise - 2-3 sentences max
-9. NEVER ask for name, address, city, or any booking info. Your job is SAFETY GUIDANCE ONLY. Booking is handled by a separate system after your response.
+7. For frozen pipes: Tell them NOT to use a torch/open flame to thaw. Recommend gentle heat (hair dryer, space heater) or let us handle it. Risk of burst when thawing.
+8. For no water: Ask if it's the whole house or just one fixture. If whole house, check if neighbors have water (could be municipal). We'll come out right away.
+9. For can't shutoff: Tell them where the main shutoff usually is (near water meter, often in basement). If valve is stuck, don't force it. We'll dispatch someone immediately.
+10. ONE clarifying question maximum if CLARIFY routing.
+11. Keep responses concise - 2-3 sentences max
+12. NEVER ask for name, address, city, or any booking info. Your job is SAFETY GUIDANCE ONLY. Booking is handled by a separate system after your response.
 
 CONTEXT CLUES:
 - "rotten egg" + "drain/sink/toilet/shower/bathroom/sewer" = SEWER_GAS (not dangerous, our job)
@@ -12633,6 +12650,9 @@ CONTEXT CLUES:
 - "clean water" / "clear water" / "no smell" = Not sewage, could be flooding
 - "brown water" / "dirty water" / "stinks" / "sewage" = Contaminated, sewage backup
 - Customer mentions gas company already came = They've ruled out gas leak
+- "pipes froze" / "frozen pipes" / "ice in pipes" / "cold snap" = FROZEN_PIPES (risk of burst when thawing)
+- "no water" / "lost all water" / "water stopped" / "nothing comes out" = NO_WATER (habitability crisis)
+- "valve stuck" / "can't find shutoff" / "main won't turn" / "water won't stop" = CANT_SHUTOFF (active water, no control)
 
 CRITICAL - FALSE GAS EMERGENCY PREVENTION:
 - "smells like gas" or "like a gas smell" when describing a DRAIN smell = SEWER_GAS, not GAS_LEAK
@@ -12645,7 +12665,7 @@ ${conversationHistory ? `\nCONVERSATION SO FAR:\n${conversationHistory}` : ''}
 
 Respond in this exact JSON format:
 {
-  "classification": "GAS_LEAK|SEWAGE|FLOODING|ELECTRICAL_WATER|SEWER_GAS|HOT_WATER_SULFUR|NOT_EMERGENCY|NEEDS_CLARIFICATION",
+  "classification": "GAS_LEAK|SEWAGE|FLOODING|FROZEN_PIPES|NO_WATER|CANT_SHUTOFF|ELECTRICAL_WATER|SEWER_GAS|HOT_WATER_SULFUR|NOT_EMERGENCY|NEEDS_CLARIFICATION",
   "routing": "NOT_OUR_JOB|OUR_JOB_URGENT|OUR_JOB_NORMAL|CLARIFY",
   "response": "Your composed response here (this follows the safety preamble)",
   "reasoning": "Brief explanation of why you classified this way"
@@ -13192,6 +13212,21 @@ Respond in this exact JSON format:
                                 /\b(?:water\s+)?(?:line|main)\s+burst\b/i.test(customerMessage));
             const floodingTargetType = isPipeBurst ? 'pipe_burst' : 'flooding';
             if (setProblemTypeIfAllowed(currentBooking, floodingTargetType, 'emergency')) {
+              updates.problemType = currentBooking.problemType;
+              updates.problemTypeSource = currentBooking.problemTypeSource;
+            }
+          } else if (triageResult.classification === 'FROZEN_PIPES') {
+            if (setProblemTypeIfAllowed(currentBooking, 'pipe_frozen', 'emergency')) {
+              updates.problemType = currentBooking.problemType;
+              updates.problemTypeSource = currentBooking.problemTypeSource;
+            }
+          } else if (triageResult.classification === 'NO_WATER') {
+            if (setProblemTypeIfAllowed(currentBooking, 'no_water_house', 'emergency')) {
+              updates.problemType = currentBooking.problemType;
+              updates.problemTypeSource = currentBooking.problemTypeSource;
+            }
+          } else if (triageResult.classification === 'CANT_SHUTOFF') {
+            if (setProblemTypeIfAllowed(currentBooking, 'main_shutoff_valve', 'emergency')) {
               updates.problemType = currentBooking.problemType;
               updates.problemTypeSource = currentBooking.problemTypeSource;
             }
@@ -13981,6 +14016,21 @@ Respond in this exact JSON format:
                 updates.problemType = currentBooking.problemType;
                 updates.problemTypeSource = currentBooking.problemTypeSource;
               }
+            }
+          } else if (triageResult.classification === 'FROZEN_PIPES') {
+            if (setProblemTypeIfAllowed(currentBooking, 'pipe_frozen', 'emergency')) {
+              updates.problemType = currentBooking.problemType;
+              updates.problemTypeSource = currentBooking.problemTypeSource;
+            }
+          } else if (triageResult.classification === 'NO_WATER') {
+            if (setProblemTypeIfAllowed(currentBooking, 'no_water_house', 'emergency')) {
+              updates.problemType = currentBooking.problemType;
+              updates.problemTypeSource = currentBooking.problemTypeSource;
+            }
+          } else if (triageResult.classification === 'CANT_SHUTOFF') {
+            if (setProblemTypeIfAllowed(currentBooking, 'main_shutoff_valve', 'emergency')) {
+              updates.problemType = currentBooking.problemType;
+              updates.problemTypeSource = currentBooking.problemTypeSource;
             }
           }
         } else if (triageResult.routing === 'OUR_JOB_NORMAL') {
