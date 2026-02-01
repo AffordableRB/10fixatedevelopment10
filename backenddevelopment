@@ -552,7 +552,7 @@ const INTENT_PATTERNS = {
     /\b(?:available|avilable|avalable|avalible|advalible|avalibl|abvalible|availble|availabe|avialable)\s+(?:right\s+)?(?:now|nw|no|nao|nw)\b/i
   ],
   problem_description: [
-    /\b(?:toilet|tolet|toylet|toiley|tilet|toiet|toliet|toielt|toilett|tolit|toile|toilte|toliet|tiolet|tilet|toilit|toliett|tlet|tliet|flush|flus|fush|flsh|flussh|commode|comode|commde|comood|drain|drayn|drane|drian|dran|draine|dain|drein|drains|leak|leek|leac|leaking|leeking|leakin|liek|laek|leack|leaak|faucet|fawcet|fosset|fauct|faucett|fawset|faucit|fawcit|facet|fawcett|pipe|pipes|pype|ppipe|pippe|pipping|pyping|piping|shower|showr|showe|shwoer|showre|showerr|shwer|shoer|bath|bathtub|bathtb|bathtu|tub|tubb|tuub|water|watr|wter|watter|wate|wateer|plumb|plumbing|plumbin|plumer|plumbr|plumbng|fix|fixx|ffix|fixe|repair|repare|repai|repar|repaire|broken|brokn|brken|brokenn|boken|broked|overflowing|overflowin|overfloing|overflowng|overfowing|clogged|clogd|clog|cloged|clogg|clogge|clooged|flooding|flooded|floodin|flodding|floding|fludding|burst|burts|brust|brst|burstt|bursted|busted)\b/i
+    /\b(?:toilet|tolet|toylet|toiley|tilet|toiet|toliet|toielt|toilett|tolit|toile|toilte|toliet|tiolet|tilet|toilit|toliett|tlet|tliet|flush|flus|fush|flsh|flussh|commode|comode|commde|comood|drain|drayn|drane|drian|dran|draine|dain|drein|drains|leak|leek|leac|leaking|leeking|leakin|liek|laek|leack|leaak|faucet|fawcet|fosset|fauct|faucett|fawset|faucit|fawcit|facet|fawcett|pipe|pipes|pype|ppipe|pippe|pipping|pyping|piping|shower|showr|showe|shwoer|showre|showerr|shwer|shoer|bath|bathtub|bathtb|bathtu|tub|tubb|tuub|water|watr|wter|watter|wate|wateer|plumb|plumbing|plumbin|plumer|plumbr|plumbng|fix|fixx|ffix|fixe|repair|repare|repai|repar|repaire|broken|brokn|brken|brokenn|boken|broked|overflowing|overflowin|overfloing|overflowng|overfowing|clogged|clogd|clog|cloged|clogg|clogge|clooged|flooding|flooded|floodin|flodding|floding|fludding|burst|burts|brust|brst|burstt|bursted|busted|rough\s*in|trim\s*out|repipe|repiped)\b/i
   ],
   booking_info_providing: [
     /\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/,
@@ -1063,7 +1063,12 @@ const REGEX_CONFIDENCE = {
       // No water types
       'whole_house_no_water',
       // Emergency types
-      'flooding_location', 'rotten_egg_smell'
+      'flooding_location', 'rotten_egg_smell',
+      // Construction / project types
+      'rough_in', 'repipe', 'remodel_plumbing', 'new_construction_plumbing',
+      'commercial_project', 'basement_finish', 'add_bathroom', 'addition_plumbing',
+      'trim_out', 'fixture_install', 'tenant_improvement', 'fixture_relocation',
+      'drain_line_install'
     ];
     
     if (entities.problemType && specificProblemTypes.includes(entities.problemType)) {
@@ -8958,7 +8963,7 @@ Return ONLY the label, nothing else.`
              /\b(?:plumbing|bathroom|kitchen|basement)\s+rough-?in\b/i.test(message) ||
              /\bneed\s+(?:a\s+)?(?:plumbing\s+)?rough-?in\b/i.test(message) ||
              /\brough\s+in\s+(?:for\s+)?(?:bathroom|kitchen|basement|addition)\b/i.test(message) ||
-             /\b(?:pre-?drywall|before\s+drywall)\s+(?:plumbing|inspection)\b/i.test(message) ||
+             /\b(?:pre-?drywall|before\s+drywall)\s+(?:plumbing|pluming|plumming|inspection)\b/i.test(message) ||
              /\bstub-?(?:out|up)s?\s+(?:plumbing|for)?\b/i.test(message) ||
              /\bstub\s+out\s+(?:plumbing|for|the)?\b/i.test(message) ||
              /\bplumbing\s+(?:stub-?outs?|stubs)\b/i.test(message) ||
@@ -8971,7 +8976,7 @@ Return ONLY the label, nothing else.`
     }
     
     // === REPIPE (whole house or partial) ===
-    else if (/\b(?:repipe|re-?pipe|repiping|re-?piping)\b/i.test(message) ||
+    else if (/\b(?:repipe|repiped|re-?pipe|re-?piped|repiping|re-?piping)\b/i.test(message) ||
              /\b(?:whole\s*house|entire\s*house)\s+(?:repipe|piping|pipes)\b/i.test(message) ||
              /\breplace\s+(?:all\s+)?(?:the\s+)?(?:pipes|piping|plumbing)\b/i.test(message) ||
              /\b(?:house|home)\s+(?:needs?|requires?)\s+(?:re-?pipe|repiping|new\s+pipes?)\b/i.test(message) ||
@@ -8983,8 +8988,8 @@ Return ONLY the label, nothing else.`
     }
     
     // === BATHROOM/KITCHEN REMODEL ===
-    else if (/\b(?:bathroom|bath|kitchen)\s+(?:remodel|renovation|reno|gut)\b/i.test(message) ||
-             /\b(?:remodel|renovation|reno|gut).*(?:bathroom|bath|kitchen)\b/i.test(message) ||
+    else if (/\b(?:bathroom|bath|kitchen)\s+(?:remodel|renovation|reno|gut|update|plumbing\s+update)\b/i.test(message) ||
+             /\b(?:remodel|renovation|reno|gut|updating|renovating).*(?:bathroom|bath|kitchen)\b/i.test(message) ||
              /\b(?:gutting|tearing\s+out)\s+(?:the\s+)?(?:bathroom|kitchen)\b/i.test(message)) {
       entities.problemType = 'remodel_plumbing';
       entities.isInstall = true;
@@ -9007,9 +9012,11 @@ Return ONLY the label, nothing else.`
       entities.isConstruction = true;
     }
     // === COMMERCIAL / TENANT IMPROVEMENT ===
-    else if (/\b(?:commercial|restaurant|retail|office|medical|dental)\s+(?:plumbing|project|build-?out|buildout)\b/i.test(message) ||
-             /\b(?:tenant\s+improvement|ti\s+project|build-?out|buildout)\b/i.test(message) ||
-             /\b(?:commercial|business)\s+(?:bathroom|restroom|kitchen)\b/i.test(message)) {
+    else if (/\b(?:commercial|restaurant|retail|office|medical|dental)\s+(?:plumbing|project|build-?out|buildout|space)\b/i.test(message) ||
+             /\b(?:retail|office)\s+space\s+plumbing\b/i.test(message) ||
+             /\b(?:tenant\s+improvement|ti\s+project|ti\s+plumbing|build-?out|buildout)\b/i.test(message) ||
+             /\b(?:commercial|business)\s+(?:bathroom|restroom|kitchen)\b/i.test(message) ||
+             /\b(?:office|retail)\s+(?:bathroom|restroom)\b/i.test(message)) {
       entities.problemType = 'commercial_project';
       entities.isInstall = true;
       entities.isConstruction = true;
@@ -9020,7 +9027,8 @@ Return ONLY the label, nothing else.`
              /\badd.*(?:bathroom|plumbing|sink|toilet).*basement\b/i.test(message) ||
              /\bbasement\s+(?:bath|bathroom|rough-?in|plumbing|buildout|build-?out)\b/i.test(message) ||
              /\b(?:putting|adding|installing)\s+(?:a\s+)?(?:bathroom|bath).*(?:in\s+)?(?:the\s+)?basement\b/i.test(message) ||
-             /\bbasement.*(?:wet\s*bar|kitchenette|laundry)\b/i.test(message) ||
+             /\bbasement\s+(?:wet\s*bar|kitchenette|laundry)\b/i.test(message) ||
+             /\b(?:wet\s*bar|kitchenette|laundry)\s+(?:in\s+(?:the\s+)?)?basement\b/i.test(message) ||
              /\b(?:need|want).*(?:plumbing|bathroom).*basement\b/i.test(message)) {
       entities.problemType = 'basement_finish';
       entities.isInstall = true;
@@ -9028,7 +9036,8 @@ Return ONLY the label, nothing else.`
     }
     // === ADD BATHROOM ===
     else if (/\b(?:add|adding|install|put\s+in)\s+(?:a\s+)?(?:new\s+)?(?:bathroom|half\s*bath|full\s*bath|powder\s*room)\b/i.test(message) ||
-             /\b(?:new|another|second|2nd|extra)\s+(?:bathroom|half\s*bath|full\s*bath)\b/i.test(message) ||
+             /\b(?:new|another|second|2nd|extra)\s+(?:full\s+)?(?:bathroom|half\s*bath|full\s*bath)\b/i.test(message) ||
+             /\b(?:doing|building|putting\s+in)\s+(?:a\s+)?(?:new\s+)?(?:full\s+)?(?:bathroom|bath|half\s*bath)\b/i.test(message) ||
              /\b(?:bathroom|half\s*bath)\s+(?:addition|install)\b/i.test(message)) {
       entities.problemType = 'add_bathroom';
       entities.isInstall = true;
@@ -9040,7 +9049,10 @@ Return ONLY the label, nothing else.`
              /\b(?:adding|building|constructing)\s+(?:an?\s+)?(?:addition|extension|wing|room)\b/i.test(message) ||
              /\b(?:new|building\s+a)\s+(?:addition|wing|extension)\b/i.test(message) ||
              /\baddition\s+(?:needs?|requires?)\s+plumbing\b/i.test(message) ||
-             /\b(?:room|master|bedroom)\s+addition.*(?:bath|plumb)\b/i.test(message)) {
+             /\b(?:room|master|bedroom)\s+addition.*(?:bath|plumb)\b/i.test(message) ||
+             /\b(?:home|house)\s+addition\b/i.test(message) ||
+             /\b(?:extension)\s+plumbing\b/i.test(message) ||
+             /\badding\s+(?:on)?to\s+(?:the\s+)?(?:house|home)\b/i.test(message)) {
       entities.problemType = 'addition_plumbing';
       entities.isInstall = true;
       entities.isConstruction = true;
@@ -9050,7 +9062,8 @@ Return ONLY the label, nothing else.`
              /\b(?:plumbing)\s+(?:trim-?\s*out)\b/i.test(message) ||
              /\bfinish\s+(?:plumbing|fixtures)\b/i.test(message) ||
              /\b(?:install|set)\s+(?:final\s+)?(?:fixtures|toilets?\s+and\s+sinks?|sinks?\s+and\s+toilets?)\b/i.test(message) ||
-             /\bfinal\s+(?:plumbing|fixture)\s+(?:install|hookup|connection)\b/i.test(message)) {
+             /\bfinal\s+(?:plumbing|fixture)\s+(?:install|hookup|hook-?up|connection|connections)\b/i.test(message) ||
+             /\b(?:plumbing)\s+(?:connections?|hookups?|hook-?ups?)\b/i.test(message)) {
       entities.problemType = 'trim_out';
       entities.isInstall = true;
       entities.isConstruction = true;
@@ -12096,7 +12109,14 @@ pipe_burst, pipe_leaking, pipe_frozen,
 water_heater_leaking, water_heater_no_hot, water_heater,
 sewer_backup, sewer_smell, sewer,
 faucet_dripping, faucet, drain, leak,
-garbage_disposal, garbage_disposal_jammed, garbage_disposal_clogged, garbage_disposal_not_working, garbage_disposal_humming, garbage_disposal_smell, garbage_disposal_leak, garbage_disposal_install
+garbage_disposal, garbage_disposal_jammed, garbage_disposal_clogged, garbage_disposal_not_working, garbage_disposal_humming, garbage_disposal_smell, garbage_disposal_leak, garbage_disposal_install,
+remodel_plumbing, rough_in, repipe, new_construction_plumbing, commercial_project, basement_finish, add_bathroom, addition_plumbing, trim_out, fixture_install, tenant_improvement
+
+CONSTRUCTION/PROJECT HANDLING:
+- If customer mentions remodel, renovation, rough-in, repipe, new construction, addition, trim out, fixture install, etc. - these are PROJECT requests, not repair problems.
+- Do NOT ask "what's wrong?" or "is it leaking/clogged?" for project requests.
+- Instead ask about project SCOPE (what rooms, what fixtures, what stage).
+- Move to booking quickly - projects don't need diagnostic questions about problems.
 
 OUTPUT FORMAT (strict JSON):
 {
@@ -12306,7 +12326,14 @@ pipe_burst, pipe_leaking, pipe_frozen,
 water_heater_leaking, water_heater_no_hot, water_heater,
 sewer_backup, sewer_smell, sewer,
 faucet_dripping, faucet, drain, leak,
-garbage_disposal, garbage_disposal_jammed, garbage_disposal_clogged, garbage_disposal_not_working, garbage_disposal_humming, garbage_disposal_smell, garbage_disposal_leak, garbage_disposal_install
+garbage_disposal, garbage_disposal_jammed, garbage_disposal_clogged, garbage_disposal_not_working, garbage_disposal_humming, garbage_disposal_smell, garbage_disposal_leak, garbage_disposal_install,
+remodel_plumbing, rough_in, repipe, new_construction_plumbing, commercial_project, basement_finish, add_bathroom, addition_plumbing, trim_out, fixture_install, tenant_improvement
+
+CONSTRUCTION/PROJECT HANDLING:
+- If customer mentions remodel, renovation, rough-in, repipe, new construction, addition, trim out, fixture install, etc. - these are PROJECT requests, not repair problems.
+- Do NOT ask "what's wrong?" or "is it leaking/clogged?" for project requests.
+- Instead ask about project SCOPE (what rooms, what fixtures, what stage).
+- Move to booking quickly - projects don't need diagnostic questions about problems.
 
 OUTPUT FORMAT (strict JSON):
 {
@@ -17825,7 +17852,10 @@ Respond in this exact JSON format:
         // "pretty steady", "constant drip", "slow drip" etc. are answers to diagnostic Qs, not corrections
         const isDiagnosticAnswer = /^(?:pretty\s+steady|constant(?:\s+drip)?|slow(?:\s+drip)?|steady|intermittent|on\s+and\s+off|all\s+the\s+time|only\s+(?:when|after)|once\s+in\s+a\s+while)$/i.test(customerMessage.trim());
         
-        if (isPositiveMessage || isTimeResponse || isAffirmativeShort || isDiagnosticAnswer) {
+        // Construction/project echo at confirmation - not a change request
+        const isConstructionEcho = /^(?:full\s+remodel|remodel|everything|rough\s*-?in|just\s+fixtures?|fixtures?\s+only|all\s+(?:of\s+)?(?:it|that|the\s+above)|the\s+whole\s+(?:thing|job)|moving\s+fixtures?|adding\s+shower|full\s+(?:gut|bathroom|kitchen|reno))$/i.test(customerMessage.trim());
+        
+        if (isPositiveMessage || isTimeResponse || isAffirmativeShort || isDiagnosticAnswer || isConstructionEcho) {
           // Treat as confirmation
           const finalBooking = updateBookingData(customerKey, { 
             stage: 'confirmed', 
@@ -17890,7 +17920,7 @@ Respond in this exact JSON format:
         
         // Apply the name immediately if not already set
         // FILTER: Reject common confirmation phrases that match two-word pattern
-        const isConfirmationPhraseStandalone = /^(sounds?\s*good|ok(ay)?|sure|yes|yep|yeah|no|nope|that\s*works?|perfect|great|fine|alright|got\s*it|thanks?|thank\s*you|please|hello|hi|hey|pretty\s+steady|constant\s*(?:drip)?|slow\s*(?:drip)?|steady|intermittent)$/i.test(customerMessage.trim());
+        const isConfirmationPhraseStandalone = /^(sounds?\s*good|ok(ay)?|sure|yes|yep|yeah|no|nope|that\s*works?|perfect|great|fine|alright|got\s*it|thanks?|thank\s*you|please|hello|hi|hey|pretty\s+steady|constant\s*(?:drip)?|slow\s*(?:drip)?|steady|intermittent|full\s+remodel|remodel|everything|rough\s*-?in|just\s+fixtures?|fixtures?\s+only|moving\s+fixtures?|adding\s+shower|all\s+(?:of\s+)?(?:it|that)|the\s+whole\s+(?:thing|job))$/i.test(customerMessage.trim());
         if (!currentBooking.name && !isConfirmationPhraseStandalone) {
           updates.name = customerMessage
             .trim()
@@ -20914,6 +20944,14 @@ Respond in this exact JSON format:
       
       if (diagnosticAck && updatedBooking.stage === 'booking_details') {
         response = diagnosticAck + response;
+      }
+
+      // GUARD: Strip phone-style greetings from SMS responses
+      if (typeof response === 'string' && /^(?:thanks\s+for\s+calling|thank\s+you\s+for\s+calling)/i.test(response.trim())) {
+        response = response.replace(/^(?:Thanks|Thank\s+you)\s+for\s+calling\s+[^.!,]+[.,!]?\s*(?:this\s+is\s+\w+[.,!]?\s*)?(?:How\s+can\s+I\s+help\s+you\s+today\???\s*)?/i, '').trim();
+        if (!response) {
+          response = "What plumbing work do you need done? I can get someone scheduled for you.";
+        }
       }
 
       // Deduplicate response to avoid identical messages
