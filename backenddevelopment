@@ -18725,6 +18725,56 @@ Respond in this exact JSON format:
       }
       
       // ================================================================
+      // CONSTRUCTION / PROJECT ROUTING: Skip diagnostics, go to booking
+      // Construction projects need an in-person assessment - no diagnostic Qs needed
+      // ================================================================
+      const constructionTypes = [
+        'rough_in', 'repipe', 'remodel_plumbing', 'new_construction_plumbing',
+        'commercial_project', 'basement_finish', 'addition_plumbing',
+        'trim_out', 'fixture_install', 'kitchen_remodel', 'bathroom_remodel',
+        'tenant_improvement', 'fixture_relocation', 'add_bathroom'
+      ];
+      if (constructionTypes.includes(updatedBooking.problemType) && 
+          (updatedBooking.stage === 'initial' || updatedBooking.stage === 'problem_diagnosis')) {
+        updatedBooking.stage = 'booking_details';
+        bookingData.set(customerKey, updatedBooking);
+        
+        const desc = getProblemDescription(updatedBooking.problemType);
+        
+        // Build response: acknowledge + answer secondary intents + ask for booking info
+        let constructionResponse = `Got it - ${desc}. These projects need an in-person look to give you an accurate scope.`;
+        
+        // Handle secondary intents (price, service area, auth, etc.)
+        if (intent.isMultiIntent && intent.allIntents) {
+          const businessName = context.businessName || CONFIG.DEFAULT_BUSINESS_NAME;
+          const serviceAreas = SERVICE_AREAS.get(context);
+          for (const singleIntent of intent.allIntents) {
+            if (singleIntent.intent === 'price_question') {
+              constructionResponse += " Pricing depends on the scope - we'll give you a quote on-site.";
+            } else if (singleIntent.intent === 'service_area_question') {
+              constructionResponse += ` We service ${serviceAreas}.`;
+            } else if (singleIntent.intent === 'company_question') {
+              constructionResponse += ` This is ${businessName}.`;
+            } else if (singleIntent.intent === 'authentication_question' || singleIntent.intent === 'real_plumber_question') {
+              incrementAuthenticationCount(customerKey);
+              constructionResponse += " I handle missed calls and scheduling, and a real plumber will be there for the work.";
+            } else if (singleIntent.intent === 'availability_now_question') {
+              constructionResponse += " We're available.";
+            }
+          }
+        }
+        
+        constructionResponse += ' ' + RESPONSE_TEMPLATES.getSmartBookingRequest(updatedBooking, '');
+        
+        return {
+          response: constructionResponse,
+          booking: updatedBooking,
+          debug: { intent: 'construction_project_booking', stage: 'booking_details', problemType: updatedBooking.problemType },
+          metadata: { stage: 'booking_details', category: 'construction', constructionType: updatedBooking.problemType }
+        };
+      }
+      
+      // ================================================================
       // END LIGHTWEIGHT ROUTING
       // ================================================================
       
